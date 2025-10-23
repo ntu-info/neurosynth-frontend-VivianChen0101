@@ -11,9 +11,9 @@
 
     <!-- === 使用說明 === -->
     <div class="text-gray-600 text-sm text-center leading-relaxed border border-gray-200 bg-gray-50 p-3 rounded-lg shadow-sm">
-      <p><b>1️⃣ Get All Terms</b> → 顯示資料庫中所有可用的心理學術語。</p>
-      <p><b>2️⃣ Get Related Terms</b> → 查詢與輸入術語相關的詞彙與相似度。</p>
-      <p><b>3️⃣ Query Studies</b> → 查詢符合條件的研究文獻資料。</p>
+      <p><b>/terms</b> → 顯示資料庫中所有可用的心理學術語。</p>
+      <p><b>/terms/&lt;term&gt;</b> → 查詢與輸入術語相關的詞彙與相似度。</p>
+      <p><b>/query/&lt;query&gt;/studies</b> → 查詢符合條件的研究文獻資料。</p>
     </div>
 
     <!-- Section 1 -->
@@ -45,6 +45,8 @@
     <!-- Output -->
     <section>
       <h2 class="text-xl font-semibold mb-2 text-gray-700">📄 API Response</h2>
+      <!-- A–Z Buttons 放在標題上方，不會遮住內容 -->
+      <div id="azContainer" class="hidden sticky top-0 bg-gray-100 z-20 flex flex-wrap justify-center mb-2 space-x-1 py-1 shadow-sm"></div>
       <div id="output" class="bg-gray-100 p-4 rounded h-[550px] overflow-auto text-sm text-gray-800"></div>
     </section>
 
@@ -56,10 +58,12 @@
 
   <script>
     const out = document.getElementById("output");
+    const azContainer = document.getElementById("azContainer");
     const scrollTopBtn = document.getElementById("scrollTopBtn");
 
     async function fetchData(url, type) {
       out.innerHTML = `<p class="text-gray-600">Requesting... <span class="font-mono">${url}</span></p>`;
+      azContainer.classList.add("hidden");
       try {
         const resp = await fetch(url);
         if (!resp.ok) throw new Error(`HTTP ${resp.status} ${resp.statusText}`);
@@ -73,22 +77,22 @@
       }
     }
 
-    // === A–Z sticky selector ===
+    // === 建立 A–Z 按鈕 ===
     function createAZButtons(containerSelector) {
+      azContainer.innerHTML = ""; // 清空舊的按鈕
       const letters = [...Array(26)].map((_, i) => String.fromCharCode(65 + i));
-      const div = document.createElement("div");
-      div.className = "sticky top-0 bg-gray-100 z-10 flex flex-wrap justify-center mb-2 space-x-1 py-1 shadow-sm";
-      div.innerHTML = letters.map(l => `
-        <button data-letter="${l}" class="text-blue-700 hover:bg-blue-200 px-2 py-1 rounded text-sm">${l}</button>
-      `).join("");
-
-      div.querySelectorAll("button").forEach(btn => {
+      letters.forEach(l => {
+        const btn = document.createElement("button");
+        btn.textContent = l;
+        btn.dataset.letter = l;
+        btn.className = "text-blue-700 hover:bg-blue-200 px-2 py-1 rounded text-sm";
         btn.addEventListener("click", () => {
-          const target = document.querySelector(`${containerSelector} [data-term^="${btn.dataset.letter.toLowerCase()}"]`);
+          const target = document.querySelector(`${containerSelector} [data-term^="${l.toLowerCase()}"]`);
           if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
         });
+        azContainer.appendChild(btn);
       });
-      return div;
+      azContainer.classList.remove("hidden");
     }
 
     // === Render: /terms ===
@@ -96,12 +100,10 @@
       if (!data.terms || data.terms.length === 0)
         return out.innerHTML = `<p class="text-gray-600">No information found for this query. Please try another term.</p>`;
 
+      createAZButtons("#termsTable");
+
       const wrapper = document.createElement("div");
       wrapper.id = "termsTable";
-
-      const az = createAZButtons("#termsTable");
-      wrapper.appendChild(az);
-
       const table = document.createElement("table");
       table.className = "table-auto w-full border-collapse";
       table.innerHTML = `
@@ -120,12 +122,10 @@
       if (!data.related || data.related.length === 0)
         return out.innerHTML = `<p class="text-gray-600">No information found for this query. Please try another term.</p>`;
 
+      azContainer.classList.add("hidden"); // 不顯示 A–Z
+
       const wrapper = document.createElement("div");
       wrapper.id = "relatedTable";
-
-      const terms = data.related.map(r => r.term);
-      const az = createAZButtons("#relatedTable");
-      wrapper.appendChild(az);
 
       const table = document.createElement("table");
       table.className = "table-auto w-full border-collapse";
@@ -136,7 +136,7 @@
         <tbody>
           ${data.related.map(r => `
             <tr>
-              <td class="border px-3 py-1" data-term="${r.term.toLowerCase()}">${r.term}</td>
+              <td class="border px-3 py-1">${r.term}</td>
               <td class="border px-3 py-1">${r.co_count}</td>
               <td class="border px-3 py-1">${r.jaccard.toFixed(4)}</td>
             </tr>`).join("")}
@@ -151,6 +151,8 @@
     function renderStudies(data) {
       if (!data.results || data.results.length === 0)
         return out.innerHTML = `<p class="text-gray-600">No information found for this query. Please try another term.</p>`;
+
+      azContainer.classList.add("hidden"); // 不顯示 A–Z
 
       const rows = data.results.map(r => `
         <tr>
@@ -195,18 +197,11 @@
       fetchData(`https://mil.psy.ntu.edu.tw:5000/query/${encodeURIComponent(q)}/studies`, "studies");
     });
 
-    // === Scroll to top button logic ===
-    const container = document.querySelector(".max-w-6xl");
-    container.addEventListener("scroll", toggleScrollBtn);
-    window.addEventListener("scroll", toggleScrollBtn);
-
-    function toggleScrollBtn() {
-      if (window.scrollY > 200 || container.scrollTop > 200) {
-        scrollTopBtn.classList.remove("hidden");
-      } else {
-        scrollTopBtn.classList.add("hidden");
-      }
-    }
+    // === Scroll to top ===
+    window.addEventListener("scroll", () => {
+      if (window.scrollY > 200) scrollTopBtn.classList.remove("hidden");
+      else scrollTopBtn.classList.add("hidden");
+    });
 
     scrollTopBtn.addEventListener("click", () => {
       window.scrollTo({ top: 0, behavior: "smooth" });
