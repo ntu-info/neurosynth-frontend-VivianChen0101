@@ -156,11 +156,24 @@
     function renderTerms(data) {
       if (!data.terms?.length)
         return out.innerHTML = `<p class="text-gray-600">No information found for this query. Please try another term.</p>`;
-      createAZButtons("#termsTable");
-      const rows = data.terms.map(t => `<tr><td class="border px-3 py-1" data-term="${t.toLowerCase()}">${t}</td></tr>`).join("");
-      out.innerHTML = `<table class="table-auto w-full border-collapse">
-        <thead class="bg-blue-200"><tr><th class="px-3 py-1 text-left">Term</th></tr></thead><tbody>${rows}</tbody></table>`;
+
+      // 建立 A–Z 按鈕（這裡 ID 名稱要和 table 對應）
+      const tableId = "termsTable";
+      createAZButtons(`#${tableId}`);
+
+      // 建立表格，並指定相同 ID
+      const rows = data.terms
+        .map(t => `<tr><td class="border px-3 py-1" data-term="${t.toLowerCase()}">${t}</td></tr>`)
+        .join("");
+      out.innerHTML = `
+        <table id="${tableId}" class="table-auto w-full border-collapse">
+          <thead class="bg-blue-200">
+            <tr><th class="px-3 py-1 text-left">Term</th></tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>`;
     }
+
 
     function renderRelated(data) {
       if (!data.related?.length)
