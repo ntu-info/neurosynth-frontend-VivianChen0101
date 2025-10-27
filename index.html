@@ -4,56 +4,106 @@
   <meta charset="UTF-8" />
   <title>Neurosynth AJAX Frontend</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #3b82f6;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      animation: spin 0.8s linear infinite;
+      margin: 10px auto;
+    }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+  </style>
 </head>
+
 <body class="bg-gray-50 min-h-screen flex items-center justify-center">
   <div class="max-w-6xl w-full bg-white shadow-md rounded-2xl p-8 space-y-6 relative">
     <h1 class="text-3xl font-bold text-center text-gray-800">🧠 Neurosynth AJAX Frontend</h1>
 
-    <!-- === 使用說明 === -->
-    <div class="text-gray-600 text-sm text-center leading-relaxed border border-gray-200 bg-gray-50 p-3 rounded-lg shadow-sm">
-      <p><b>/terms</b> → 顯示資料庫中所有可用的心理學術語。</p>
-      <p><b>/terms/&lt;term&gt;</b> → 查詢與輸入術語相關的詞彙與相似度。</p>
-      <p><b>/query/&lt;query&gt;/studies</b> → 查詢符合條件的研究文獻資料。</p>
+    <!-- Tabs -->
+    <div class="flex justify-center gap-6 mt-4">
+      <button id="tab-terms" class="tab-btn active flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded-full shadow-md">
+        🧾 <span class="font-medium">Get All Terms</span>
+      </button>
+      <button id="tab-related" class="tab-btn flex items-center gap-2 bg-gray-200 hover:bg-green-500 hover:text-white px-4 py-2 rounded-full shadow-md">
+        🔍 <span class="font-medium">Get Related Terms</span>
+      </button>
+      <button id="tab-query" class="tab-btn flex items-center gap-2 bg-gray-200 hover:bg-purple-500 hover:text-white px-4 py-2 rounded-full shadow-md">
+        📚 <span class="font-medium">Query Studies</span>
+      </button>
     </div>
 
-    <!-- Section 1 -->
-    <section>
-      <h2 class="text-xl font-semibold mb-2 text-gray-700">1️⃣ Get All Terms</h2>
+    <!-- 說明 -->
+    <div class="text-gray-600 text-sm text-center border border-gray-200 bg-gray-50 p-3 rounded-lg">
+      <p><b>Get All Terms</b> → 顯示所有可用的心理學術語。</p>
+      <p><b>Get Related Terms</b> → 查詢與輸入術語相關的詞彙與相似度。</p>
+      <p><b>Query Studies</b> → 查詢符合條件的研究文獻。</p>
+    </div>
+
+    <!-- Get All Terms -->
+    <section id="section-terms" class="endpoint-section">
+      <h2 class="text-xl font-semibold mb-2 text-gray-700">🧾 Get All Terms</h2>
       <button id="btnAllTerms" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
-        Fetch /terms
+        Go!
       </button>
     </section>
 
-    <!-- Section 2 -->
-    <section>
-      <h2 class="text-xl font-semibold mb-2 text-gray-700">2️⃣ Get Related Terms</h2>
-      <input id="termInput" class="border border-gray-300 p-2 w-full rounded mb-2" placeholder="Enter term, e.g. amygdala" />
-      <button id="btnSingleTerm" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">
-        Fetch /terms/&lt;term&gt;
-      </button>
+    <!-- Related Terms -->
+    <section id="section-related" class="endpoint-section hidden relative">
+      <h2 class="text-xl font-semibold mb-2 text-gray-700">🔍 Get Related Terms (Instant AJAX)</h2>
+      <input id="termInput" class="border border-gray-300 p-2 w-full rounded mb-2"
+             placeholder="Start typing term, e.g. amygdala" autocomplete="off"/>
     </section>
 
-    <!-- Section 3 -->
-    <section>
-      <h2 class="text-xl font-semibold mb-2 text-gray-700">3️⃣ Query Studies</h2>
-      <input id="queryInput" class="border border-gray-300 p-2 w-full rounded mb-2" placeholder='Enter logical query, e.g. amygdala not emotion' />
-      <button id="btnQuery" class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded">
-        Fetch /query/&lt;query&gt;/studies
-      </button>
+    <!-- Query Studies -->
+    <section id="section-query" class="endpoint-section hidden relative">
+      <h2 class="text-xl font-semibold mb-2 text-gray-700">📚 Query Studies : Logical Search</h2>
+
+    <!-- Logical Search 說明 -->
+    <div class="text-sm text-gray-700 bg-purple-50 border border-purple-200 rounded p-4 mb-3 leading-relaxed">
+      <p class="font-medium text-purple-700 mb-2">🧩 Example logical queries you can try:</p>
+      <ul class="space-y-1">
+        <li>
+          <code>1. and</code>
+          — e.g. <code class="bg-white px-1 py-0.5 rounded border border-purple-200">amygdala and emotion</code>  
+          <span class="text-gray-600">→ Studies about both amygdala and emotion.</span>
+        </li>
+        <li>
+          <code>2. not</code>
+          — e.g. <code class="bg-white px-1 py-0.5 rounded border border-purple-200">amygdala not fear</code>  
+          <span class="text-gray-600">→ Studies about amygdala excluding fear.</span>
+        </li>
+        <li>
+          <code>3. or</code>
+          — e.g. <code class="bg-white px-1 py-0.5 rounded border border-purple-200">hippocampus or memory</code>  
+          <span class="text-gray-600">→ Studies mentioning hippocampus or memory.</span>
+        </li>
+        <li>
+          <code>4. ( )</code>
+          — e.g. <code class="bg-white px-1 py-0.5 rounded border border-purple-200">(prefrontal and decision) not emotion</code>  
+          <span class="text-gray-600">→ Prioritize the logic inside parentheses.</span>
+        </li>
+      </ul>
+    </div>
+
+
+      <input id="queryInput" class="border border-gray-300 p-2 w-full rounded mb-2"
+             placeholder="Start typing logical query, e.g. amygdala not emotion" autocomplete="off"/>
     </section>
 
     <!-- Output -->
     <section>
       <h2 class="text-xl font-semibold mb-2 text-gray-700">📄 API Response</h2>
-      <!-- A–Z Buttons 放在標題上方，不會遮住內容 -->
       <div id="azContainer" class="hidden sticky top-0 bg-gray-100 z-20 flex flex-wrap justify-center mb-2 space-x-1 py-1 shadow-sm"></div>
-      <div id="output" class="bg-gray-100 p-4 rounded h-[550px] overflow-auto text-sm text-gray-800"></div>
+      <div id="output" class="bg-gray-100 p-4 rounded h-[550px] overflow-auto text-sm text-gray-800 text-center">
+        Waiting for input...
+      </div>
     </section>
 
-    <!-- Scroll to top button -->
-    <button id="scrollTopBtn" class="hidden fixed bottom-8 right-8 bg-blue-500 hover:bg-blue-600 text-white rounded-full p-3 shadow-lg transition-opacity duration-300">
-      ⬆️
-    </button>
+    <!-- Scroll to top -->
+    <button id="scrollTopBtn" class="hidden fixed bottom-8 right-8 bg-blue-500 hover:bg-blue-600 text-white rounded-full p-3 shadow-lg">⬆️</button>
   </div>
 
   <script>
@@ -61,14 +111,23 @@
     const azContainer = document.getElementById("azContainer");
     const scrollTopBtn = document.getElementById("scrollTopBtn");
 
+    // debounce helper
+    function debounce(func, delay = 400) {
+      let timer;
+      return (...args) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => func(...args), delay);
+      };
+    }
+
+    // loading spinner
     async function fetchData(url, type) {
-      out.innerHTML = `<p class="text-gray-600">Requesting... <span class="font-mono">${url}</span></p>`;
+      out.innerHTML = `<div class="spinner"></div><p class="text-gray-600 mt-2">Loading...</p>`;
       azContainer.classList.add("hidden");
       try {
         const resp = await fetch(url);
         if (!resp.ok) throw new Error(`HTTP ${resp.status} ${resp.statusText}`);
         const data = await resp.json();
-
         if (type === "terms") renderTerms(data);
         else if (type === "related") renderRelated(data);
         else if (type === "studies") renderStudies(data);
@@ -77,135 +136,116 @@
       }
     }
 
-    // === 建立 A–Z 按鈕 ===
+    // render functions
     function createAZButtons(containerSelector) {
-      azContainer.innerHTML = ""; // 清空舊的按鈕
+      azContainer.innerHTML = "";
       const letters = [...Array(26)].map((_, i) => String.fromCharCode(65 + i));
       letters.forEach(l => {
         const btn = document.createElement("button");
         btn.textContent = l;
-        btn.dataset.letter = l;
         btn.className = "text-blue-700 hover:bg-blue-200 px-2 py-1 rounded text-sm";
         btn.addEventListener("click", () => {
           const target = document.querySelector(`${containerSelector} [data-term^="${l.toLowerCase()}"]`);
-          if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+          if (target) target.scrollIntoView({ behavior: "smooth" });
         });
         azContainer.appendChild(btn);
       });
       azContainer.classList.remove("hidden");
     }
 
-    // === Render: /terms ===
     function renderTerms(data) {
-      if (!data.terms || data.terms.length === 0)
+      if (!data.terms?.length)
         return out.innerHTML = `<p class="text-gray-600">No information found for this query. Please try another term.</p>`;
-
       createAZButtons("#termsTable");
-
-      const wrapper = document.createElement("div");
-      wrapper.id = "termsTable";
-      const table = document.createElement("table");
-      table.className = "table-auto w-full border-collapse";
-      table.innerHTML = `
-        <thead class="bg-blue-200"><tr><th class="px-3 py-1 text-left">Term</th></tr></thead>
-        <tbody>
-          ${data.terms.map(t => `<tr><td class="border px-3 py-1" data-term="${t.toLowerCase()}">${t}</td></tr>`).join("")}
-        </tbody>
-      `;
-      wrapper.appendChild(table);
-      out.innerHTML = "";
-      out.appendChild(wrapper);
+      const rows = data.terms.map(t => `<tr><td class="border px-3 py-1" data-term="${t.toLowerCase()}">${t}</td></tr>`).join("");
+      out.innerHTML = `<table class="table-auto w-full border-collapse">
+        <thead class="bg-blue-200"><tr><th class="px-3 py-1 text-left">Term</th></tr></thead><tbody>${rows}</tbody></table>`;
     }
 
-    // === Render: /terms/<term> ===
     function renderRelated(data) {
-      if (!data.related || data.related.length === 0)
+      if (!data.related?.length)
         return out.innerHTML = `<p class="text-gray-600">No information found for this query. Please try another term.</p>`;
-
-      azContainer.classList.add("hidden"); // 不顯示 A–Z
-
-      const wrapper = document.createElement("div");
-      wrapper.id = "relatedTable";
-
-      const table = document.createElement("table");
-      table.className = "table-auto w-full border-collapse";
-      table.innerHTML = `
-        <thead class="bg-green-200">
-          <tr><th>Term</th><th>Total Count</th><th>Similarity</th></tr>
-        </thead>
-        <tbody>
-          ${data.related.map(r => `
-            <tr>
-              <td class="border px-3 py-1">${r.term}</td>
-              <td class="border px-3 py-1">${r.co_count}</td>
-              <td class="border px-3 py-1">${r.jaccard.toFixed(4)}</td>
-            </tr>`).join("")}
-        </tbody>
-      `;
-      wrapper.appendChild(table);
-      out.innerHTML = "";
-      out.appendChild(wrapper);
+      const rows = data.related.map(r =>
+        `<tr><td class="border px-3 py-1">${r.term}</td><td class="border px-3 py-1">${r.co_count}</td><td class="border px-3 py-1">${r.jaccard.toFixed(4)}</td></tr>`
+      ).join("");
+      out.innerHTML = `<table class="table-auto w-full border-collapse">
+        <thead class="bg-green-200"><tr><th>Term</th><th>Total Count</th><th>Similarity</th></tr></thead><tbody>${rows}</tbody></table>`;
     }
 
-    // === Render: /query/.../studies ===
     function renderStudies(data) {
-      if (!data.results || data.results.length === 0)
+      if (!data.results?.length)
         return out.innerHTML = `<p class="text-gray-600">No information found for this query. Please try another term.</p>`;
-
-      azContainer.classList.add("hidden"); // 不顯示 A–Z
-
-      const rows = data.results.map(r => `
-        <tr>
-          <td class="border px-3 py-1">${r.id || "-"}</td>
-          <td class="border px-3 py-1">${r.study_id || "-"}</td>
-          <td class="border px-3 py-1">${r.contrast_id || "-"}</td>
-          <td class="border px-3 py-1">${r.title || "-"}</td>
-          <td class="border px-3 py-1">${r.authors || "-"}</td>
-          <td class="border px-3 py-1">${r.journal || "-"}</td>
-          <td class="border px-3 py-1">${r.year || "-"}</td>
-        </tr>`).join("");
-
-      out.innerHTML = `
-        <p class="text-gray-500 mb-2">Found ${data.count} studies.</p>
+      const rows = data.results.map(r =>
+        `<tr><td class="border px-3 py-1">${r.id || "-"}</td><td class="border px-3 py-1">${r.study_id || "-"}</td>
+         <td class="border px-3 py-1">${r.contrast_id || "-"}</td><td class="border px-3 py-1">${r.title || "-"}</td>
+         <td class="border px-3 py-1">${r.authors || "-"}</td><td class="border px-3 py-1">${r.journal || "-"}</td>
+         <td class="border px-3 py-1">${r.year || "-"}</td></tr>`).join("");
+      out.innerHTML = `<p class="text-gray-500 mb-2">Found ${data.count} studies.</p>
         <table class="table-auto w-full border-collapse text-xs">
-          <thead class="bg-purple-200">
-            <tr>
-              <th>ID</th><th>Study ID</th><th>Contrast ID</th>
-              <th>Title</th><th>Authors</th><th>Journal</th><th>Year</th>
-            </tr>
-          </thead>
-          <tbody>${rows}</tbody>
-        </table>`;
+        <thead class="bg-purple-200"><tr><th>ID</th><th>Study ID</th><th>Contrast ID</th><th>Title</th><th>Authors</th><th>Journal</th><th>Year</th></tr></thead>
+        <tbody>${rows}</tbody></table>`;
     }
 
-    // === Buttons ===
-    document.getElementById("btnAllTerms").addEventListener("click", () => {
-      fetchData("https://mil.psy.ntu.edu.tw:5000/terms", "terms");
+    // AJAX events
+    document.getElementById("btnAllTerms").addEventListener("click", () =>
+      fetchData("https://mil.psy.ntu.edu.tw:5000/terms", "terms")
+    );
+
+    const termInput = document.getElementById("termInput");
+    termInput.addEventListener("input", debounce(() => {
+      const term = termInput.value.trim();
+      if (term.length >= 3)
+        fetchData(`https://mil.psy.ntu.edu.tw:5000/terms/${encodeURIComponent(term)}`, "related");
+    }));
+    termInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        const term = termInput.value.trim();
+        if (term) fetchData(`https://mil.psy.ntu.edu.tw:5000/terms/${encodeURIComponent(term)}`, "related");
+      }
     });
 
-    document.getElementById("btnSingleTerm").addEventListener("click", () => {
-      const term = document.getElementById("termInput").value.trim();
-      if (!term)
-        return out.innerHTML = `<p class="text-red-600">Please enter a term!</p>`;
-      fetchData(`https://mil.psy.ntu.edu.tw:5000/terms/${encodeURIComponent(term)}`, "related");
+    const queryInput = document.getElementById("queryInput");
+    queryInput.addEventListener("input", debounce(() => {
+      const q = queryInput.value.trim();
+      if (q.length >= 3)
+        fetchData(`https://mil.psy.ntu.edu.tw:5000/query/${encodeURIComponent(q)}/studies`, "studies");
+    }));
+    queryInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        const q = queryInput.value.trim();
+        if (q) fetchData(`https://mil.psy.ntu.edu.tw:5000/query/${encodeURIComponent(q)}/studies`, "studies");
+      }
     });
 
-    document.getElementById("btnQuery").addEventListener("click", () => {
-      const q = document.getElementById("queryInput").value.trim();
-      if (!q)
-        return out.innerHTML = `<p class="text-red-600">Please enter a query string!</p>`;
-      fetchData(`https://mil.psy.ntu.edu.tw:5000/query/${encodeURIComponent(q)}/studies`, "studies");
+    // Tab switching
+    const tabs = document.querySelectorAll(".tab-btn");
+    const sections = document.querySelectorAll(".endpoint-section");
+    tabs.forEach((tab, index) => {
+      tab.addEventListener("click", () => {
+        tabs.forEach(t => {
+          t.classList.remove("bg-blue-500", "bg-green-500", "bg-purple-500", "text-white");
+          t.classList.add("bg-gray-200");
+        });
+        sections.forEach(s => s.classList.add("hidden"));
+        sections[index].classList.remove("hidden");
+        tab.classList.remove("bg-gray-200");
+        tab.classList.add("text-white");
+        if (index === 0) tab.classList.add("bg-blue-500");
+        else if (index === 1) tab.classList.add("bg-green-500");
+        else tab.classList.add("bg-purple-500");
+        out.innerHTML = "<p class='text-gray-500'>Waiting for input...</p>";
+        azContainer.classList.add("hidden");
+      });
     });
 
-    // === Scroll to top ===
+    // Scroll to top
     window.addEventListener("scroll", () => {
       if (window.scrollY > 200) scrollTopBtn.classList.remove("hidden");
       else scrollTopBtn.classList.add("hidden");
     });
-
-    scrollTopBtn.addEventListener("click", () => {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    });
+    scrollTopBtn.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
   </script>
 </body>
 </html>
