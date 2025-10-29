@@ -20,7 +20,7 @@
 
 <body class="bg-gray-50 min-h-screen flex items-center justify-center">
   <div class="max-w-6xl w-full bg-white shadow-md rounded-2xl p-8 space-y-6 relative">
-    <h1 class="text-3xl font-bold text-center text-gray-800">🧠 Neurosynth AJAX Frontend</h1>
+    <h1 class="text-3xl font-bold text-center text-gray-800">🧠 Neurosynth Frontend</h1>
 
     <!-- Tabs -->
     <div class="flex justify-center gap-6 mt-4">
@@ -52,7 +52,7 @@
 
     <!-- Related Terms -->
     <section id="section-related" class="endpoint-section hidden relative">
-      <h2 class="text-xl font-semibold mb-2 text-gray-700">🔍 Get Related Terms (Instant AJAX)</h2>
+      <h2 class="text-xl font-semibold mb-2 text-gray-700">🔍 Get Related Terms</h2>
       <input id="termInput" class="border border-gray-300 p-2 w-full rounded mb-2"
              placeholder="Start typing term, e.g. amygdala" autocomplete="off"/>
     </section>
@@ -95,7 +95,7 @@
 
     <!-- Output -->
     <section>
-      <h2 class="text-xl font-semibold mb-2 text-gray-700">📄 API Response</h2>
+      <h2 class="text-xl font-semibold mb-2 text-gray-700">📄Response</h2>
       <div id="azContainer" class="hidden sticky top-0 bg-gray-100 z-20 flex flex-wrap justify-center mb-2 space-x-1 py-1 shadow-sm"></div>
       <div id="output" class="bg-gray-100 p-4 rounded h-[550px] overflow-auto text-sm text-gray-800 text-center">
         Waiting for input...
@@ -157,7 +157,7 @@
       if (!data.terms?.length)
         return out.innerHTML = `<p class="text-gray-600">No information found for this query. Please try another term.</p>`;
 
-      // 建立 A–Z 按鈕（這裡 ID 名稱要和 table 對應）
+      // 建立 A–Z 按鈕
       const tableId = "termsTable";
       createAZButtons(`#${tableId}`);
 
