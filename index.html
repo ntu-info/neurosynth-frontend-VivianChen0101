@@ -201,20 +201,20 @@
 
     // AJAX events
     document.getElementById("btnAllTerms").addEventListener("click", () =>
-      fetchData("https://mil.psy.ntu.edu.tw:5000/terms", "terms")
+      fetchData("https://hpc.psy.ntu.edu.tw:5000/terms", "terms")
     );
 
     const termInput = document.getElementById("termInput");
     termInput.addEventListener("input", debounce(() => {
       const term = termInput.value.trim();
       if (term.length >= 3)
-        fetchData(`https://mil.psy.ntu.edu.tw:5000/terms/${encodeURIComponent(term)}`, "related");
+        fetchData(`https://hpc.psy.ntu.edu.tw:5000/terms/${encodeURIComponent(term)}`, "related");
     }));
     termInput.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
         e.preventDefault();
         const term = termInput.value.trim();
-        if (term) fetchData(`https://mil.psy.ntu.edu.tw:5000/terms/${encodeURIComponent(term)}`, "related");
+        if (term) fetchData(`https://hpc.psy.ntu.edu.tw:5000/terms/${encodeURIComponent(term)}`, "related");
       }
     });
 
@@ -222,13 +222,13 @@
     queryInput.addEventListener("input", debounce(() => {
       const q = queryInput.value.trim();
       if (q.length >= 3)
-        fetchData(`https://mil.psy.ntu.edu.tw:5000/query/${encodeURIComponent(q)}/studies`, "studies");
+        fetchData(`https://hpc.psy.ntu.edu.tw:5000/query/${encodeURIComponent(q)}/studies`, "studies");
     }));
     queryInput.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
         e.preventDefault();
         const q = queryInput.value.trim();
-        if (q) fetchData(`https://mil.psy.ntu.edu.tw:5000/query/${encodeURIComponent(q)}/studies`, "studies");
+        if (q) fetchData(`https://hpc.psy.ntu.edu.tw:5000/query/${encodeURIComponent(q)}/studies`, "studies");
       }
     });
 
